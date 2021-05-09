@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratory 3</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- <script src="app.js"></script> -->
+</head>
+<body>
+    
+    <div id="wrapper">
+        <div id="menu">
+            <p class="welcome"></p>
+            <br><br>
+            <div id="chatbox">
+                <ul id="messages"></ul>
+            </div>
+        </div>
+        <form onsubmit="return sendMessage();">
+            <input type="text" id="message" class="usermsg" size="63" placeholder="Text message" autocomplete="off">
+            <input type="submit" class="button">
+        </form>
+    </div>
+
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/8.2.9/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.2.9/firebase-database.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/8.2.9/firebase-analytics.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  var firebaseConfig = {
+    apiKey: "AIzaSyCniOyKSeHJsPM9XzIzQVwxUdOONDqPHYk",
+    authDomain: "architecturelab3-1831c.firebaseapp.com",
+    projectId: "architecturelab3-1831c",
+    storageBucket: "architecturelab3-1831c.appspot.com",
+    messagingSenderId: "1089112638214",
+    appId: "1:1089112638214:web:b8cb876b4598e06d689487",
+    measurementId: "G-6SWENY81T2",
+    databaseURL: "https://architecturelab3-1831c-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+
+//   var myName = prompt("Нэрээ оруулна уу");
+</script>
+</body>
+<script>
+    var database = firebase.database();
+    let myName = prompt("Нэрээ оруулна уу:");
+    // let uid = firebase.auth().currentUser.uid;
+
+    const sendMessage =() =>{
+        let myMessage = document.getElementById("message").value;
+        database.ref("messages").push().set({
+            sender: myName,
+            message: myMessage
+        });
+        let message1 = document.getElementById("message");
+        message1.value = "";
+        return false;
+    }
+    firebase.database().ref("messages").on("child_added", function(snapshot){
+        var html = "";
+        if(snapshot.val().sender == myName){
+            html += "<li class = 'message msgleft' id = 'message-" + snapshot.key + "'>";
+        }
+        else{
+            html += "<li class = 'message msgright' id = 'message-" + snapshot.key + "'>";
+        }
+        if(snapshot.val().sender == myName && snapshot.message != "Энэ мессеж устгагдсан"){
+            html += "<button data-id = '" + snapshot.key + "'onclick = 'deleteMessage(this);'>";
+            html += "Delete </button>";
+        } 
+        html += " " + snapshot.val().sender + "  :" + snapshot.val().message;
+        document.getElementById("messages").innerHTML += html;
+        myDiv = document.getElementById("chatbox");
+        window.scrollTo(0, myDiv.innerHeight);
+
+    });
+    database.ref("messages").on("child_changed", function(snapshot){
+        // var html = "";
+        // html += "<li id = 'message-" + snapshot.key + "'>";
+            /* if(snapshot.val().sender == myName && ){
+                html += "<button data-id = '" + snapshot.key + "'onclick = 'deleteMessage(this);'>";
+                html += "Delete </button>";
+            } */
+        // html += "{ " + snapshot.val().sender + " } :" + snapshot.val().message;
+        // document.getElementById("messages").innerHTML += html;
+        document.getElementById("message-" + snapshot.key).innerHTML = " " + snapshot.val().sender + "  :Энэ мессеж устгагдсан байна.";
+        
+    });
+    function deleteMessage(self){
+        var messageId = self.getAttribute("data-id");
+
+        firebase.database().ref("messages").child(messageId).once('value').then(function(snap){
+            var data = snap.val();
+            var update = {};
+            update['sender'] = data.sender;
+            update['message'] = "Энэ мессеж устгагдсан";
+            //ugly procedure
+            document.getElementById("message-" + snap.key).innerHTML = "This message has been removed";
+            return database.ref("messages").child(messageId).update(update);
+
+        });
+    
+        firebase.database().ref("messages").on("child_removed", function(snapshot){
+            document.getElementById("message-" + shotshot.key).innerHTML = "This message has been removed";
+        });
+    }
+    function scrollToBottom(){
+        const messages = document.getElementById('messages');
+        const messagesid = document.getElementsByClassName('message');  
+        messages.scrollTop = messagesid.offsetTop - 10;
+    }
+    scrollToBottom();
+    setInterval(scrollToBottom, 1000);
+</script>
+</html>
